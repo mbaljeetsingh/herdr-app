@@ -718,6 +718,7 @@ has 120 programs (agents, editors, runtimes, tools, databases, infra);
   Terminals' `picker`, `peek`, and `pane` (an
   example pane header, not used by the default layouts), and `worktree`
   (git worktrees as spaces: the space menu's and the + menu's New worktree,
+  the branch name is optional, a blank one becomes something like `calm-otter-3f2a91`;
   Open worktree (the repo's checkouts, filtered; one already shown is gone
   to) and Remove worktree open it as a dialog with props `{space, folder?,
   action: "new" | "open" | "remove"}` (the repo: folder, else where the

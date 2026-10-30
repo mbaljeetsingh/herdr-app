@@ -20,6 +20,12 @@ const tilde = (path, userHome) => {
   return p.startsWith(h) ? `~${p.slice(h.length)}` : path;
 };
 const slug = (branch) => branch.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+// The branch name for a "New worktree" left blank, the way Claude Code names its own:
+// two words and a short hex, so two new worktrees never collide.
+const ADJECTIVES = ["bright", "calm", "eager", "gentle", "golden", "keen", "lively", "quiet", "steady", "swift"];
+const NOUNS = ["otter", "heron", "maple", "ember", "harbor", "meadow", "lantern", "falcon", "willow", "comet"];
+const pick = (words) => words[Math.floor(Math.random() * words.length)];
+const suggestion = () => `${pick(ADJECTIVES)}-${pick(NOUNS)}-${Math.random().toString(16).slice(2, 8).padEnd(6, "0")}`;
 const ago = (s) => {
   const d = Date.now() / 1000 - s;
   return d < 3600 ? `${Math.max(1, Math.round(d / 60))}m` : d < 86400 ? `${Math.round(d / 3600)}h` : d < 86400 * 60 ? `${Math.round(d / 86400)}d` : `${Math.round(d / 86400 / 30)}mo`;
@@ -112,7 +118,7 @@ export default class Worktree extends View {
     this.text = props()?.branch ?? "";
     this.list = undefined; // open: the checkouts, once read
     this.at = 0;
-    this.input = InputState.new({ value: this.text, placeholder: this.opening ? "filter worktrees" : "branch name" });
+    this.input = InputState.new({ value: this.text, placeholder: this.opening ? "filter worktrees" : "branch name (optional)" });
     this.input.on("change", (_e, cx) => { this.text = this.input.value(); this.error = ""; this.at = 0; cx.notify(); });
     this.input.on("submit", (_e, cx) => this.go(cx));
     this.inputFocused = true;
@@ -180,8 +186,8 @@ export default class Worktree extends View {
   }
 
   async create() {
-    const branch = this.text.trim();
-    if (!branch) return "Type a branch name.";
+    // The name is optional: left blank, Enter makes one up.
+    const branch = this.text.trim() || suggestion();
     const path = `${ROOT(this.userHome)}/${this.repo.name}/${slug(branch)}`;
     const exists = (await git(this.repo.main, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], this.on)).ok;
     const add = exists ? ["worktree", "add", path, branch] : ["worktree", "add", "-b", branch, path, "HEAD"];
